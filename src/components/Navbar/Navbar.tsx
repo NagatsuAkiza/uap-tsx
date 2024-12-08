@@ -2,12 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { getSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const Navbar = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     const checkSession = async () => {
