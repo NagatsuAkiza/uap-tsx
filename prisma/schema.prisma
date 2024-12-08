@@ -1,14 +1,173 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum RentalStatus {
+  PENDING
+  APPROVED
+  COMPLETED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PAID
+  PENDING
+  FAILED
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  fpUser        String?   @default("https://www.inforwaves.com/media/2021/04/dummy-profile-pic-300x300-1.png")
+  role          UserRole  @default(USER)
+  accounts      Account[]
+  rentals       Rental[]
+  reviews       Review[]
+  cars          Car[]
+
+  @@map("users")
+}
+
+model Account {
+  id                Int     @id @default(autoincrement())
+  userId            Int
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Car {
+  id           Int      @id @default(autoincrement())
+  brand        String
+  model        String
+  pricePerDay  Float
+  availability Boolean  @default(true)
+  imageUrl     String
+  description  String
+  ownerName    String
+  no_telp      String
+  rating       Int?
+  rentals      Rental[]
+  reviews      Review[]
+  userId       Int?
+  user         User?    @relation(fields: [userId], references: [id])
+
+  @@map("cars")
+}
+
+model Rental {
+  id        Int          @id @default(autoincrement())
+  userId    Int
+  carId     Int
+  startDate DateTime
+  endDate   DateTime
+  status    RentalStatus @default(PENDING)
+  user      User         @relation(fields: [userId], references: [id])
+  car       Car          @relation(fields: [carId], references: [id])
+  payments  Payment[]
+  penalties Penalty[]
+
+  @@index([userId])
+  @@index([carId])
+  @@map("rentals")
+}
+
+model Payment {
+  id          Int           @id @default(autoincrement())
+  rentalId    Int
+  amount      Float
+  status      PaymentStatus @default(PAID)
+  paymentDate DateTime
+  rental      Rental        @relation(fields: [rentalId], references: [id])
+
+  @@map("payments")
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  carId     Int
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  car       Car      @relation(fields: [carId], references: [id])
+
+  @@map("reviews")
+}
+
+model Penalty {
+  id        Int      @id @default(autoincrement())
+  rentalId  Int
+  type      String
+  amount    Float
+  reason    String
+  createdAt DateTime @default(now())
+  rental    Rental   @relation(fields: [rentalId], references: [id])
+
+  @@map("penalties")
+}
+
+// model TwoFactorConfirmation {
+//   id     Int  @id @default(autoincrement())
+//   userId Int
+//   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@unique([userId])
+//   @@map("two_factor_confirmations")
+// }
+
+// model VerificationToken {
+//   id      Int      @id @default(autoincrement())
+//   email   String
+//   token   String   @unique
+//   expires DateTime
+
+//   @@unique([email, token])
+//   @@map("verification_tokens")
+// }
+
+// model TwoFactorToken {
+//   id      Int      @id @default(autoincrement())
+//   email   String
+//   token   String   @unique
+//   expires DateTime
+
+//   @@unique([email, token])
+//   @@map("two_factor_tokens")
+// }
+
+// model PasswordResetToken {
+//   id      Int      @id @default(autoincrement())
+//   email   String
+//   token   String   @unique
+//   expires DateTime
+
+//   @@unique([email, token])
+//   @@map("password_reset_tokens")
+// }

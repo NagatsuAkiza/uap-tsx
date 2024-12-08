@@ -1,7 +1,27 @@
-import React from "react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { getSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 const Navbar = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const session = await getSession();
+      setIsAuthenticated(!!session);
+    };
+
+    checkSession();
+  }, []);
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/auth/login" });
+  };
+
   return (
     <header className="bg-green-600 py-4">
       <div className="mx-auto flex items-center justify-between px-4">
@@ -13,39 +33,33 @@ const Navbar = () => {
         {/* Navigation Links */}
         <nav>
           <ul className="flex space-x-6 text-white font-medium">
-            <li>
-              <Link href="#home" className="hover:text-green-300 transition duration-200">
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link href="#about" className="hover:text-green-300 transition duration-200">
-                About
-              </Link>
-            </li>
-            <li>
-              <Link href="#services" className="hover:text-green-300 transition duration-200">
-                Services
-              </Link>
-            </li>
-            <li>
-              <Link href="#contact" className="hover:text-green-300 transition duration-200">
-                Contact
-              </Link>
-            </li>
-            <li>
-              <Link href="/book" className="hover:text-green-300 transition duration-200">
-                Book
-              </Link>
-            </li>
+            <Link href="/" className="hover:text-green-300 transition duration-200">
+              Home
+            </Link>
+            <Link href="/cars-list" className="hover:text-green-300 transition duration-200">
+              Cars
+            </Link>
+            <Link href="/book" className="hover:text-green-300 transition duration-200">
+              Booking
+            </Link>
           </ul>
         </nav>
 
-        {/* Login Button */}
+        {/* Login/Logout Button */}
         <div>
-          <button className="bg-white text-green-600 font-bold px-4 py-2 rounded hover:bg-green-700 hover:text-white transition duration-200">
-            Login
-          </button>
+          {isAuthenticated ? (
+            <button
+              onClick={handleLogout}
+              className="bg-white text-green-600 font-bold px-4 py-2 rounded hover:bg-green-700 hover:text-white transition duration-200">
+              Logout
+            </button>
+          ) : (
+            <Link
+              href="/auth/login"
+              className="bg-white text-green-600 font-bold px-4 py-2 rounded hover:bg-green-700 hover:text-white transition duration-200">
+              Login
+            </Link>
+          )}
         </div>
       </div>
     </header>
