@@ -1,63 +1,51 @@
-// src/components/Filter.tsx
+"use client";
+
 import { SearchIcon } from "lucide-react";
 import React, { useState, useEffect } from "react";
 
 interface FilterProps {
-  onFilter: (filters: { model: string; priceRange: { min: number; max: number } }) => void;
-}
-
-interface CarInterface {
-  id: number;
-  brand: string;
-  model: string;
-  pricePerDay: number;
-  availability: boolean;
-  imageUrl: string;
-  description: string;
-  ownerName: string;
+  onFilter: (filters: { brand: string; priceRange: { min: number; max: number } }) => void;
 }
 
 const Filter: React.FC<FilterProps> = ({ onFilter }) => {
-  const [model, setModel] = useState("");
+  const [brand, setBrand] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
-  const [models, setModels] = useState<string[]>([]); // State untuk menyimpan model mobil
-  const [minPriceFromDB, setMinPriceFromDB] = useState(0); // Minimum price dari database
-  const [maxPriceFromDB, setMaxPriceFromDB] = useState(1000000); // Maximum price dari database
+  const [brands, setBrands] = useState<string[]>([]);
+  const [minPriceFromDB, setMinPriceFromDB] = useState(0);
+  const [maxPriceFromDB, setMaxPriceFromDB] = useState(1000000);
 
   useEffect(() => {
     const fetchCarsData = async () => {
-      const response = await fetch("/api/cars?page=1"); // Ambil data mobil
+      const response = await fetch("/api/cars?page=1"); // Ambil data mobil pertama
       const data = await response.json();
 
-      // Set model dari database dengan casting ke string[]
-      const carModels = Array.from(
-        new Set(data.cars.map((car: CarInterface) => car.model))
-      ) as string[];
-      setModels(carModels);
+      const carBrands = data.brands || []; // Ambil daftar brand yang dikirim oleh backend
+      setBrands(carBrands);
 
-      // Set harga min dan max
       setMinPriceFromDB(data.minPrice);
       setMaxPriceFromDB(data.maxPrice);
-
-      // Set nilai filter default
-      setMinPrice(data.minPrice.toString());
-      setMaxPrice(data.maxPrice.toString());
     };
 
     fetchCarsData();
   }, []);
 
+  const formatCurrency = (value: number): string =>
+    new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR"
+    }).format(value);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const filters = {
-      model,
+      brand,
       priceRange: {
         min: minPrice ? parseInt(minPrice) : minPriceFromDB,
         max: maxPrice ? parseInt(maxPrice) : maxPriceFromDB
       }
     };
-    onFilter(filters); // Trigger filter function from parent
+    onFilter(filters); // Trigger filter function dari parent
   };
 
   return (
@@ -65,18 +53,18 @@ const Filter: React.FC<FilterProps> = ({ onFilter }) => {
       <h3 className="text-xl font-semibold mb-4">Filter Mobil</h3>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="model" className="block text-sm font-medium text-gray-700">
-            Model:
+          <label htmlFor="brand" className="block text-sm font-medium text-gray-700">
+            Brand:
           </label>
           <select
-            id="model"
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
+            id="brand"
+            value={brand}
+            onChange={(e) => setBrand(e.target.value)}
             className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-            <option value="">Pilih model mobil</option>
-            {models.map((model) => (
-              <option key={model} value={model}>
-                {model}
+            <option value="">Pilih brand mobil</option>
+            {brands.map((brand) => (
+              <option key={brand} value={brand}>
+                {brand}
               </option>
             ))}
           </select>
@@ -88,9 +76,8 @@ const Filter: React.FC<FilterProps> = ({ onFilter }) => {
           <input
             id="minPrice"
             type="number"
-            value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
-            placeholder={`Harga minimum ${minPriceFromDB}`}
+            placeholder={`Harga minimum ${formatCurrency(minPriceFromDB)}`}
             className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
@@ -101,9 +88,8 @@ const Filter: React.FC<FilterProps> = ({ onFilter }) => {
           <input
             id="maxPrice"
             type="number"
-            value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
-            placeholder={`Harga maksimum ${maxPriceFromDB}`}
+            placeholder={`Harga maksimum ${formatCurrency(maxPriceFromDB)}`}
             className="mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>

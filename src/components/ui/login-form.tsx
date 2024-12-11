@@ -1,32 +1,44 @@
 "use client";
 
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { TextField, Button, Typography, Box, Paper } from "@mui/material";
+import {
+  TextField,
+  IconButton,
+  InputAdornment,
+  Button,
+  Typography,
+  Box,
+  Paper
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
-const Register = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
+const Login: React.FC = () => {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
   const router = useRouter();
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const response = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, name })
+    const response = await signIn("credentials", {
+      redirect: false,
+      email,
+      password
     });
 
-    const data = await response.json();
-
-    if (data.error) {
-      setError(data.error);
+    if (response?.error) {
+      setError(response.error);
     } else {
-      router.push("/login");
+      router.push("/dashboard");
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
   };
 
   return (
@@ -55,22 +67,12 @@ const Register = () => {
             fontWeight: 600,
             color: "#1976d2"
           }}>
-          Register
+          Login
         </Typography>
         <Typography variant="body2" align="center" gutterBottom color="textSecondary">
-          Buat akun baru untuk mulai menggunakan layanan kami.
+          Masuk ke akun Anda untuk mengakses dashboard
         </Typography>
-        <form onSubmit={handleRegister}>
-          <TextField
-            label="Full Name"
-            type="text"
-            variant="outlined"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            fullWidth
-            required
-            margin="normal"
-          />
+        <form onSubmit={handleLogin}>
           <TextField
             label="Email"
             type="email"
@@ -83,13 +85,22 @@ const Register = () => {
           />
           <TextField
             label="Password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             variant="outlined"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             fullWidth
             required
             margin="normal"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={togglePasswordVisibility} edge="end">
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
           />
           {error && (
             <Typography color="error" variant="body2" sx={{ marginY: 1 }}>
@@ -107,13 +118,13 @@ const Register = () => {
                 backgroundColor: "#1565c0"
               }
             }}>
-            Register
+            Login
           </Button>
         </form>
         <Typography variant="body2" align="center" color="textSecondary" sx={{ marginTop: 2 }}>
-          Sudah punya akun?{" "}
-          <a href="/auth/login" style={{ color: "#1976d2", textDecoration: "none" }}>
-            Login Sekarang
+          Belum punya akun?{" "}
+          <a href="/auth/register" style={{ color: "#1976d2", textDecoration: "none" }}>
+            Daftar Sekarang
           </a>
         </Typography>
       </Paper>
@@ -121,4 +132,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default Login;
