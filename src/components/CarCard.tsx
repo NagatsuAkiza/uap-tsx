@@ -36,7 +36,7 @@ const CarCard = ({ car }: { car: Car }) => {
 
   useEffect(() => {
     fetchCar();
-  }, [car.id]);
+  }, [car.id, fetchCar]);
 
   return (
     <div className="border rounded-lg overflow-hidden shadow-md bg-white hover:shadow-xl transition-shadow duration-300">
@@ -83,15 +83,17 @@ const CarCard = ({ car }: { car: Car }) => {
               Lihat Detail
             </Button>
           </Link>
-          <Button
-            className={`py-2 px-4 w-full rounded-md ${
-              car.availability
-                ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                : "bg-gray-400 text-gray-200 cursor-not-allowed"
-            }`}
-            disabled={!car.availability}>
-            Sewa Mobil
-          </Button>
+          <Link href={`/booking/${car.id}`}>
+            <Button
+              className={`py-2 px-4 w-full rounded-md ${
+                car.availability
+                  ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                  : "bg-gray-400 text-gray-200 cursor-not-allowed"
+              }`}
+              disabled={!car.availability}>
+              Sewa Mobil
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

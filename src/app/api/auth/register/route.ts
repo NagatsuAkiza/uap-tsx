@@ -1,56 +1,65 @@
-import bcrypt from "bcrypt";
+import { NextResponse, NextRequest } from "next/server";
+import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const { email, password, name } = await req.json();
-
-  if (!email || !password || !name) {
-    return NextResponse.json({ error: "Email, password, and name are required" }, { status: 400 });
-  }
-
-  const existingUser = await prisma.user.findUnique({
-    where: { email }
-  });
-
-  if (existingUser) {
-    return NextResponse.json({ error: "User already exists" }, { status: 400 });
-  }
-
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
-  }
-
-  if (!password || password.length < 6) {
-    return NextResponse.json(
-      { error: "Password must be at least 6 characters long" },
-      { status: 400 }
-    );
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 12);
-
   try {
-    const user = await prisma.user.create({
+    // Validasi bahwa request memiliki body
+    const body = await req.json().catch(() => null);
+
+    if (!body) {
+      return NextResponse.json({ error: "Body request tidak valid" }, { status: 400 });
+    }
+
+    const { email, password, name, noKtp, noHp } = body;
+
+    // Validasi input
+    if (!email || !password || !name || !noKtp || !noHp) {
+      return NextResponse.json({ error: "Semua field wajib diisi" }, { status: 400 });
+    }
+
+    // Validasi format email
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return NextResponse.json({ error: "Format email tidak valid" }, { status: 400 });
+    }
+
+    // Periksa apakah email sudah terdaftar
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+    if (existingUser) {
+      return NextResponse.json({ error: "Email sudah terdaftar" }, { status: 409 });
+    }
+
+    // Enkripsi password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Simpan data user dan account ke database
+    const newUser = await prisma.user.create({
       data: {
-        email,
         name,
-        password: hashedPassword
-      }
+        email,
+        password: hashedPassword,
+        accounts: {
+          create: {
+            noHp,
+            noKtp,
+          },
+        },
+      },
+      include: {
+        accounts: true,
+      },
     });
 
-    return NextResponse.json(
-      {
-        message: "User created successfully",
-        user: { id: user.id, name: user.name, email: user.email }
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { error: "An error occurred while creating the user" },
-      { status: 500 }
-    );
+    // Response sukses
+    return NextResponse.json({ message: "User berhasil dibuat", user: newUser }, { status: 201 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    } else {
+      return NextResponse.json({ error: "Terjadi kesalahan pada server" }, { status: 500 });
+    }
   }
 }
+  

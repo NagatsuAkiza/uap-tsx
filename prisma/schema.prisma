@@ -25,39 +25,35 @@ enum PaymentStatus {
   FAILED
 }
 
+enum PaymentMethod {
+  EWALLET
+  BANK
+}
+
 model User {
-  id            Int       @id @default(autoincrement())
-  name          String
-  email         String    @unique
-  emailVerified DateTime?
-  password      String?
-  fpUser        String?   @default("https://www.inforwaves.com/media/2021/04/dummy-profile-pic-300x300-1.png")
-  role          UserRole  @default(USER)
-  accounts      Account[]
-  rentals       Rental[]
-  reviews       Review[]
-  cars          Car[]
+  id       Int       @id @default(autoincrement())
+  name     String
+  email    String    @unique
+  password String
+  role     UserRole  @default(USER)
+  accounts Account[]
+  rentals  Rental[]
+  reviews  Review[]
+  cars     Car[]
 
   @@map("users")
 }
 
 model Account {
-  id                Int     @id @default(autoincrement())
-  userId            Int
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
+  id     Int     @id @default(autoincrement())
+  userId Int
+  noKtp  String
+  noHp   String
+  alamat String?
+  fKtp   String?
+  fpUser String? @default("https://www.inforwaves.com/media/2021/04/dummy-profile-pic-300x300-1.png")
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
   @@map("accounts")
 }
 
@@ -86,7 +82,7 @@ model Rental {
   carId     Int
   startDate DateTime
   endDate   DateTime
-  status    RentalStatus @default(PENDING)
+  status    RentalStatus @default(APPROVED)
   user      User         @relation(fields: [userId], references: [id])
   car       Car          @relation(fields: [carId], references: [id])
   payments  Payment[]
@@ -101,6 +97,7 @@ model Payment {
   id          Int           @id @default(autoincrement())
   rentalId    Int
   amount      Float
+  method      PaymentMethod
   status      PaymentStatus @default(PAID)
   paymentDate DateTime
   rental      Rental        @relation(fields: [rentalId], references: [id])
@@ -133,41 +130,3 @@ model Penalty {
   @@map("penalties")
 }
 
-// model TwoFactorConfirmation {
-//   id     Int  @id @default(autoincrement())
-//   userId Int
-//   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   @@unique([userId])
-//   @@map("two_factor_confirmations")
-// }
-
-// model VerificationToken {
-//   id      Int      @id @default(autoincrement())
-//   email   String
-//   token   String   @unique
-//   expires DateTime
-
-//   @@unique([email, token])
-//   @@map("verification_tokens")
-// }
-
-// model TwoFactorToken {
-//   id      Int      @id @default(autoincrement())
-//   email   String
-//   token   String   @unique
-//   expires DateTime
-
-//   @@unique([email, token])
-//   @@map("two_factor_tokens")
-// }
-
-// model PasswordResetToken {
-//   id      Int      @id @default(autoincrement())
-//   email   String
-//   token   String   @unique
-//   expires DateTime
-
-//   @@unique([email, token])
-//   @@map("password_reset_tokens")
-// }

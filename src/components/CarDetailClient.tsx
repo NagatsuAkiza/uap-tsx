@@ -29,13 +29,6 @@ export const CarDetailClient = ({ car }: { car: Car }) => {
     }
   }, [car]);
 
-  const handleRent = () => {
-    if (car.availability) {
-      // Logika untuk pemesanan
-      alert(`Berhasil menyewa mobil: ${car.brand} ${car.model}`);
-    }
-  };
-
   return (
     <div className="max-w-4xl mx-auto mt-10 px-4">
       {/* Hero Section */}
@@ -106,7 +99,6 @@ export const CarDetailClient = ({ car }: { car: Car }) => {
             className={`bg-indigo-600 text-white py-3 px-8 rounded-lg hover:bg-indigo-700 transition w-full md:w-auto ${
               car.availability ? "" : "opacity-50 cursor-not-allowed"
             }`}
-            onClick={handleRent}
             disabled={!car.availability}>
             {car.availability ? "Sewa Sekarang" : "Tidak Tersedia"}
           </Button>
