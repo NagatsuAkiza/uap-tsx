@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import React, { useEffect, useState } from "react";
 
 interface StatsData {
@@ -17,33 +18,48 @@ interface RentalData {
   endDate: string;
 }
 
+interface TransactionData {
+  id: number;
+  profilePicture: string;
+  name: string;
+  rentalStatus: string;
+  paymentStatus: string;
+  timeRemaining: string;
+}
+
 const DashboardComponent = () => {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [recentRentals, setRecentRentals] = useState<RentalData[]>([]);
+  const [transactions, setTransactions] = useState<TransactionData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, rentalsRes] = await Promise.all([
+        const [statsRes, rentalsRes, transactionsRes] = await Promise.all([
           fetch("/api/dashboard/stats"),
-          fetch("/api/dashboard/recent-rentals")
+          fetch("/api/dashboard/recent-rentals"),
+          fetch("/api/dashboard/transactions")
         ]);
 
-        if (!statsRes.ok || !rentalsRes.ok) {
-          throw new Error(`Failed to fetch: ${statsRes.status} / ${rentalsRes.status}`);
+        if (!statsRes.ok || !rentalsRes.ok || !transactionsRes.ok) {
+          throw new Error(
+            `Failed to fetch: ${statsRes.status} / ${rentalsRes.status} / ${transactionsRes.status}`
+          );
         }
 
         const statsData = await statsRes.json();
         const rentalsData = await rentalsRes.json();
+        const transactionsData = await transactionsRes.json();
 
-        if (!statsData || !rentalsData) {
+        if (!statsData || !rentalsData || !transactionsData) {
           throw new Error("Received invalid data from the API");
         }
 
         setStats(statsData);
         setRecentRentals(rentalsData);
+        setTransactions(transactionsData);
       } catch (err: unknown) {
         if (err instanceof Error) {
           console.error("Error fetching data:", err);
@@ -73,7 +89,7 @@ const DashboardComponent = () => {
     );
   }
 
-  if (!stats || recentRentals.length === 0) {
+  if (!stats || recentRentals.length === 0 || transactions.length === 0) {
     return <div>No data available.</div>;
   }
 
@@ -128,6 +144,44 @@ const DashboardComponent = () => {
                   <td className="py-2 px-4 border-b">
                     {new Date(rental.endDate).toLocaleDateString()}
                   </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <h2 className="text-xl font-bold text-gray-800 mb-2">Transactions Overview</h2>
+        <div className="overflow-auto bg-gray-50 rounded shadow">
+          <table className="min-w-full bg-white rounded">
+            <thead>
+              <tr>
+                <th className="py-2 px-4 border-b text-left">Profile</th>
+                <th className="py-2 px-4 border-b text-left">Name</th>
+                <th className="py-2 px-4 border-b text-left">Rental Status</th>
+                <th className="py-2 px-4 border-b text-left">Payment Status</th>
+                <th className="py-2 px-4 border-b text-left">Time Remaining</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.map((transaction) => (
+                <tr key={transaction.id}>
+                  <td className="py-2 px-4 border-b">
+                    <Image
+                      width={1000}
+                      height={1000}
+                      src={transaction.profilePicture}
+                      alt="Profile"
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  </td>
+                  <td className="py-2 px-4 border-b">{transaction.name}</td>
+                  <td className="py-2 px-4 border-b text-green-700">{transaction.rentalStatus}</td>
+                  <td className="py-2 px-4 border-b text-yellow-600">
+                    {transaction.paymentStatus}
+                  </td>
+                  <td className="py-2 px-4 border-b">{transaction.timeRemaining}</td>
                 </tr>
               ))}
             </tbody>
